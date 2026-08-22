@@ -1,0 +1,4 @@
+git init
+$env:Path += ";C:\Git\cmd"
+git init
+git add .

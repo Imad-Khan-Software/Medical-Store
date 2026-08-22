@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RxStock — Point of Sale</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- removed invalid SRI for Font Awesome; include without integrity to avoid blocking during development -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">Rx<span>Stock</span></div>
+      <button class="nav-item active" aria-label="Sell">🧾 Sell</button>
+      <button class="nav-item" id="nav-admin" style="display:none;" aria-label="Admin dashboard">📊 Admin dashboard</button>
+      <div style="flex:1"></div>
+      <button class="nav-item" onclick="UI.confirmLogout()" aria-label="Sign out">↩ Sign out</button>
+    </aside>
+
+    <main class="main">
+      <div class="topnav">
+        <div class="search">
+          <input id="scan-input" type="search" placeholder="Scan barcode or search medicine" aria-label="Scan or search" />
+        </div>
+        <div class="right">
+          <div class="muted" id="current-date" aria-hidden="true"></div>
+          
+          <!-- Notification Bell Wrap -->
+          <div class="notification-wrap" style="position: relative;">
+            <button id="notification-bell-btn" class="btn btn-ghost" title="Notifications" aria-label="Notifications">
+              <i class="fa-solid fa-bell"></i>
+              <span id="notification-count" class="notification-count" style="display:none;">0</span>
+            </button>
+            
+            <div id="notification-panel" class="notification-panel" style="display:none; position: absolute; right: 0; top: 100%; z-index: 1000; width: 320px;">
+              <div class="notification-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border-color, #e5e7eb);">
+                <strong>Notifications</strong>
+                <button id="mark-all-read-btn" class="btn btn-ghost" style="font-size:12px; padding: 2px 8px;">Mark all as read</button>
+              </div>
+              <div id="notification-list" style="max-height: 360px; overflow-y: auto;"></div>
+            </div>
+          </div>
+
+          <button class="btn btn-ghost" title="Toggle dark mode" onclick="toggleDark(!document.body.classList.contains('dark'))" aria-label="Toggle dark mode"><i class="fa-solid fa-moon"></i></button>
+          <div class="avatar" title="Profile" aria-hidden="true"><span id="who-avatar">U</span></div>
+        </div>
+      </div>
+
+      <div class="topbar">
+        <h1>Sell</h1>
+        <div class="who" id="who-label" aria-hidden="true"></div>
+      </div>
+
+      <div class="layout two-col">
+        <section class="left-col">
+          <div class="panel">
+            <div class="panel-header">Search & filters</div>
+            <div class="field"><label for="category-filter">Category / Brand / Manufacturer</label><input id="category-filter" type="text" placeholder="Filter results" aria-label="Filter results" /></div>
+            <div class="panel-subtitle">Recent products</div>
+            <div id="recent-products" class="recent-products"></div>
+          </div>
+
+          <div id="results-panel" class="panel" aria-live="polite" aria-atomic="true"></div>
+        </section>
+
+        <aside class="right-col">
+          <div class="panel">
+            <h3>Cart</h3>
+            <div id="cart-items" role="status" aria-live="polite" aria-atomic="true"></div>
+            <div class="cart-summary">
+              <div class="cart-row"><span>Subtotal</span><span id="cart-subtotal">Rs 0.00</span></div>
+              <div class="cart-row"><label for="cart-tax">Tax (%)</label><input id="cart-tax" type="number" min="0" value="0" aria-label="Tax percent" /></div>
+              <div class="cart-row"><label for="cart-discount">Discount</label><input id="cart-discount" type="number" min="0" value="0" aria-label="Discount amount" /></div>
+              <div class="cart-row grand"><span>Grand Total</span><span id="cart-grand">Rs 0.00</span></div>
+              <div class="cart-row"><span>Items</span><span id="cart-count">0</span></div>
+            </div>
+          </div>
+
+          <div class="panel customer-block">
+            <strong>Customer</strong>
+            <div class="field"><label for="customer-name">Name</label><input id="customer-name" placeholder="Walk-in or existing customer" aria-label="Customer name" /></div>
+            <div class="field"><label for="customer-phone">Phone</label><input id="customer-phone" placeholder="Phone number" aria-label="Customer phone" /></div>
+          </div>
+
+          <div class="panel payment-panel">
+            <strong>Payment</strong>
+            <div class="fieldset payment-grid">
+              <div class="field"><label for="payment-method">Method</label><select id="payment-method" aria-label="Payment method"><option value="Cash">Cash</option><option value="Card">Card</option><option value="Bank">Bank transfer</option><option value="Credit">Credit</option></select></div>
+              <div class="field" id="payment-reference-group" style="display:none;"><label for="payment-reference">Reference</label><input id="payment-reference" placeholder="Txn reference" aria-label="Payment reference" /></div>
+              <div class="field" id="amount-received-group"><label for="amount-received">Amount received</label><input id="amount-received" type="number" min="0" step="0.01" value="0" aria-label="Amount received" /></div>
+              <div class="field"><label>Change</label><div id="change-due" class="mono">Rs 0.00</div></div>
+            </div>
+            <div id="credit-notice" class="muted" style="margin-top:10px;font-size:13px"></div>
+          </div>
+
+          <div class="panel hold-panel">
+            <div class="hold-actions"><button id="hold-btn" class="btn btn-outline">Hold Sale</button><button id="clear-cart-btn" class="btn btn-ghost">Clear</button></div>
+            <button id="checkout-btn" class="btn btn-primary" style="width:100%;margin-top:12px">Complete Sale</button>
+            <div class="panel-subtitle" style="margin-top:18px;">Held sales</div>
+            <div id="held-sales" class="held-sales"></div>
+          </div>
+        </aside>
+      </div>
+
+      <div id="receipt" class="print-only" aria-hidden="true">
+        <div class="r-header"><strong>RxStock Pharmacy</strong><div class="muted">Invoice copy</div></div>
+        <div class="r-meta"></div>
+        <div id="r-datetime"></div>
+        <table id="r-items" style="width:100%"></table>
+        <table style="width:100%"></table>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="utils.js"></script>
+  <script src="ui.js"></script>
+  <script src="auth.js"></script>
+  <script src="pos.js"></script>
+  <script src="notifications.js"></script>
+</body>
+</html>

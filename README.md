@@ -2,7 +2,7 @@
 
 A high-performance, frontend-only pharmacy management and Point of Sale (POS) web application powered by Supabase. Designed with zero backend maintenance required, combining secure role-based access control with real-time inventory tracking.
 
-🔗 **Live Demo:** https://rxpharmacy.netlify.app
+🔗 **Live Demo:** https://rxpharmacystore.netlify.app
 
 ---
 
